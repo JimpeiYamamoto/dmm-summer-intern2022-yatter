@@ -9,7 +9,7 @@ type (
 		ID StatusID `json:"-"`
 
 		// The username of the account
-		AccountID int64 `json:"account_id,omitempty"`
+		AccountID int64 `json:"account_id,omitempty" db:"account_id"`
 
 		// The username of the account
 		Content string `json:"content" db:"content"`

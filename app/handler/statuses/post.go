@@ -2,7 +2,6 @@ package statuses
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"yatter-backend-go/app/domain/object"
 	"yatter-backend-go/app/handler/auth"
@@ -30,7 +29,7 @@ func (h *handler) Post(w http.ResponseWriter, r *http.Request) {
 	status.Content = req.Status
 	status.AccountID = account.ID
 	s := h.app.Dao.Status()
-	if err := s.PostStatus(r.Context(), *status); err != nil {
+	if err := s.PostStatus(r.Context(), status); err != nil {
 		panic("Invalid object.Status")
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -39,5 +38,4 @@ func (h *handler) Post(w http.ResponseWriter, r *http.Request) {
 		httperror.InternalServerError(w, err)
 		return
 	}
-	fmt.Println(status)
 }
