@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"yatter-backend-go/app/handler/httperror"
+
+	"github.com/go-chi/chi"
 )
 
 func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
-	username := r.URL.Path[len("/v1/accounts/"):]
+	username := chi.URLParam(r, "username")
 
 	a := h.app.Dao.Account()
 	account, err := a.FindByUsername(r.Context(), username)
