@@ -26,13 +26,17 @@ func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	account := new(object.Account)
 	account.Username = req.Username
+	//パスワードの作成
 	if err := account.SetPassword(req.Password); err != nil {
 		httperror.InternalServerError(w, err)
 		return
 	}
 
-	_ = h.app.Dao.Account() // domain/repository の取得
-	panic("Must Implement Account Registration")
+	//dbを持つaccount構造体
+	a := h.app.Dao.Account() // domain/repository の取得
+	if err := a.CreateNewAccount(r.Context(), *account); err != nil {
+		panic("Must Implement Account Registration")
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(account); err != nil {
