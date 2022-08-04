@@ -7,6 +7,13 @@ import (
 	"yatter-backend-go/app/handler/httperror"
 )
 
+type Response struct {
+	Id       int64           `json:"id"`
+	Account  object.Account  `json:"account"`
+	Content  string          `json:"content"`
+	CreateAt object.DateTime `json:"create_at"`
+}
+
 func (h *handler) GetPublic(w http.ResponseWriter, r *http.Request) {
 	query := object.Query{
 		OnlyMedia: r.URL.Query().Get("only_media"),
@@ -19,7 +26,22 @@ func (h *handler) GetPublic(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		httperror.BadRequest(w, err)
 	}
-	if err := json.NewEncoder(w).Encode(statuses); err != nil {
+	ress := make([]Response, 0)
+	a := h.app.Dao.Account()
+	for _, status := range statuses {
+		account, err := a.FindByUserID(r.Context(), status.AccountID)
+		if err != nil {
+			httperror.BadRequest(w, err)
+		}
+		res := Response{
+			Id:       status.ID,
+			Account:  *account,
+			Content:  status.Content,
+			CreateAt: status.CreateAt,
+		}
+		ress = append(ress, res)
+	}
+	if err := json.NewEncoder(w).Encode(ress); err != nil {
 		httperror.InternalServerError(w, err)
 	}
 }
