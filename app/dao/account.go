@@ -87,6 +87,35 @@ func debugRelation(ctx context.Context, r *account) {
 	}
 }
 
+func (r *account) GetFollowers(ctx context.Context, username string, query object.Query) ([]object.Account, error) {
+	a, err := r.FindByUsername(ctx, username)
+	if err != nil {
+		return nil, fmt.Errorf("%w", err)
+	}
+	rows, err := r.db.QueryContext(
+		ctx,
+		"SELECT follower_id FROM relation WHERE followee_id = ? AND follower_id < ? AND follower_id > ? LIMIT ?",
+		a.ID,
+		query.MaxID,
+		query.SinceID,
+		query.Limit,
+	)
+	if err != nil {
+		return nil, nil
+	}
+	as := make([]object.Account, 0)
+	for rows.Next() {
+		var followeeId int64
+		rows.Scan(&followeeId)
+		a, err := r.FindByUserID(ctx, followeeId)
+		if err != nil {
+			return nil, fmt.Errorf("%w", err)
+		}
+		as = append(as, *a)
+	}
+	return as, nil
+}
+
 func (r *account) GetFollowingUser(ctx context.Context, username string, limit string) ([]object.Account, error) {
 	a, err := r.FindByUsername(ctx, username)
 	if err != nil {
