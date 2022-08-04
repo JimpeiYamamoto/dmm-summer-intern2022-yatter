@@ -56,7 +56,7 @@ func (r *account) GetRelationships(ctx context.Context, myId, targetId int64) (*
 		targetId,
 	)
 	if rows.Next() {
-		entity.Following = true
+		entity.FollowedBy = true
 	}
 	rows, _ = r.db.QueryContext(
 		ctx,
@@ -65,9 +65,53 @@ func (r *account) GetRelationships(ctx context.Context, myId, targetId int64) (*
 		myId,
 	)
 	if rows.Next() {
-		entity.FollowedBy = true
+		entity.Following = true
 	}
 	return &entity, nil
+}
+
+func debugRelation(ctx context.Context, r *account) {
+	rows, _ := r.db.QueryContext(ctx, "SELECT * FROM relation")
+	defer rows.Close()
+
+	for rows.Next() {
+		var follower_id, followee_id int64
+		rows.Scan(&follower_id, &followee_id)
+		res, _ := r.FindByUserID(ctx, follower_id)
+		follower_name := res.Username
+
+		res, _ = r.FindByUserID(ctx, followee_id)
+		followee_name := res.Username
+
+		fmt.Printf("%s => %s\n", follower_name, followee_name)
+	}
+}
+
+func (r *account) GetFollowingUser(ctx context.Context, username string, limit string) ([]object.Account, error) {
+	a, err := r.FindByUsername(ctx, username)
+	if err != nil {
+		return nil, fmt.Errorf("%w", err)
+	}
+	rows, err := r.db.QueryContext(
+		ctx,
+		"select followee_id from relation where follower_id = ? LIMIT ?",
+		a.ID,
+		limit,
+	)
+	if err != nil {
+		return nil, nil
+	}
+	as := make([]object.Account, 0)
+	for rows.Next() {
+		var followeeId int64
+		rows.Scan(&followeeId)
+		a, err := r.FindByUserID(ctx, followeeId)
+		if err != nil {
+			return nil, fmt.Errorf("%w", err)
+		}
+		as = append(as, *a)
+	}
+	return as, nil
 }
 
 func (r *account) CreateNewAccount(ctx context.Context, entity object.Account) error {
