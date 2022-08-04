@@ -33,6 +33,21 @@ func DebugTable(ctx context.Context, r *account) {
 	}
 }
 
+func (r *account) FollowUser(ctx context.Context, myId, targetId int64) error {
+	_, err := r.db.ExecContext(
+		ctx,
+		"INSERT INTO relation (follower_id, followee_id) VALUES (?, ?)",
+		targetId,
+		myId,
+	)
+	fmt.Println("===========")
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+	fmt.Println("===========")
+	return nil
+}
+
 func (r *account) CreateNewAccount(ctx context.Context, entity object.Account) error {
 	_, err := r.db.ExecContext(
 		ctx,

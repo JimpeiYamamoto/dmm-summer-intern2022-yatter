@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"yatter-backend-go/app/app"
+	"yatter-backend-go/app/handler/auth"
 
 	"github.com/go-chi/chi"
 )
@@ -20,6 +21,6 @@ func NewRouter(app *app.App) http.Handler {
 	h := &handler{app: app}
 	r.Post("/", h.Create)
 	r.Get("/{username}", h.Get)
-
+	r.With(auth.Middleware(app)).Post("/{username}/follow", h.Follow)
 	return r
 }
