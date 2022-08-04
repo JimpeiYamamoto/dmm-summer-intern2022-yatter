@@ -31,27 +31,15 @@ func (r *status) PostStatus(ctx context.Context, entity *object.Status) error {
 		entity.Content,
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w", err)
 	}
 	entity.ID, _ = result.LastInsertId()
 	o, err := r.FindById(ctx, entity.ID)
 	if err != nil {
-		return nil
+		return fmt.Errorf("%w", err)
 	}
 	entity.CreateAt = o.CreateAt
 	return nil
-}
-
-func debugTable(ctx context.Context, s *status) {
-	rows, _ := s.db.QueryContext(ctx, "SELECT  account_id, content FROM STATUS")
-	defer rows.Close()
-
-	var a object.Status
-
-	for rows.Next() {
-		rows.Scan(&a.AccountID, &a.Content)
-		fmt.Println(a.AccountID, a.Content)
-	}
 }
 
 func (r *status) GetTimelinesPublic(ctx context.Context, q object.Query) ([]object.Status, error) {
@@ -60,7 +48,7 @@ func (r *status) GetTimelinesPublic(ctx context.Context, q object.Query) ([]obje
 	msg += " AND id < " + q.MaxID
 	l, err := strconv.Atoi(q.Limit)
 	if err != nil {
-		fmt.Println(fmt.Errorf("err: %w", err))
+		return nil, fmt.Errorf("%w", err)
 	}
 	if l > 80 {
 		q.Limit = "80"
@@ -68,14 +56,11 @@ func (r *status) GetTimelinesPublic(ctx context.Context, q object.Query) ([]obje
 		q.Limit = "40"
 	}
 	msg += " LIMIT " + q.Limit
-	fmt.Println("================")
-	fmt.Println(msg)
-	fmt.Println("================")
 	rows, err := r.db.QueryContext(ctx,
 		msg,
 	)
 	if err != nil {
-		return nil, nil
+		return nil, fmt.Errorf("%w", err)
 	}
 	defer rows.Close()
 	a := make([]object.Status, 0)
@@ -88,7 +73,6 @@ func (r *status) GetTimelinesPublic(ctx context.Context, q object.Query) ([]obje
 }
 
 func (r *status) FindById(ctx context.Context, id int64) (*object.Status, error) {
-
 	entity := new(object.Status)
 	err := r.db.QueryRowxContext(
 		ctx,
@@ -99,7 +83,6 @@ func (r *status) FindById(ctx context.Context, id int64) (*object.Status, error)
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
-
 		return nil, fmt.Errorf("%w", err)
 	}
 	return entity, nil

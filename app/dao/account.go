@@ -49,7 +49,6 @@ func (r *account) CreateNewAccount(ctx context.Context, entity object.Account) e
 	return nil
 }
 
-// FindByUsername : ユーザ名からユーザを取得
 func (r *account) FindByUsername(ctx context.Context, username string) (*object.Account, error) {
 	entity := new(object.Account)
 	err := r.db.QueryRowxContext(ctx, "select * from account where username = ?", username).StructScan(entity)
@@ -57,10 +56,8 @@ func (r *account) FindByUsername(ctx context.Context, username string) (*object.
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
-
 		return nil, fmt.Errorf("%w", err)
 	}
-
 	return entity, nil
 }
 
@@ -75,7 +72,6 @@ func (r *account) FindByUserID(ctx context.Context, id int64) (*object.Account, 
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
-
 		return nil, fmt.Errorf("%w", err)
 	}
 	return entity, nil

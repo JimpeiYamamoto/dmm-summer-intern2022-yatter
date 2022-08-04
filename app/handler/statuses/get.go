@@ -2,7 +2,6 @@ package statuses
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"yatter-backend-go/app/handler/httperror"
@@ -12,23 +11,19 @@ import (
 
 func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
-
 	s := h.app.Dao.Status()
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		panic("ID Must numeric")
+		httperror.BadRequest(w, err)
 	}
 	status, err := s.FindById(r.Context(), int64(id))
 	if err != nil {
-		panic(fmt.Errorf("must existing ID: %w", err))
+		httperror.BadRequest(w, err)
 	}
-	fmt.Println("============")
-	fmt.Println(status)
-	fmt.Println("============")
 	a := h.app.Dao.Account()
 	account, err := a.FindByUserID(r.Context(), status.AccountID)
 	if err != nil {
-		fmt.Println(fmt.Errorf("%w", err))
+		httperror.BadRequest(w, err)
 	}
 	res := PostReponse{
 		Id:       status.ID,

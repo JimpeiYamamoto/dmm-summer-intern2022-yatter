@@ -14,7 +14,7 @@ func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
 	a := h.app.Dao.Account()
 	account, err := a.FindByUsername(r.Context(), username)
 	if err != nil {
-		panic("Must existing Username")
+		httperror.BadRequest(w, err)
 	}
 	if err := json.NewEncoder(w).Encode(account); err != nil {
 		httperror.InternalServerError(w, err)

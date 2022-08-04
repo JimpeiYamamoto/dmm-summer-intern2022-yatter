@@ -26,12 +26,13 @@ func (h *handler) Post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	account := auth.AccountOf(r)
-	status := new(object.Status)
-	status.Content = req.Status
-	status.AccountID = account.ID
+	status := object.Status{
+		Content:   req.Status,
+		AccountID: account.ID,
+	}
 	s := h.app.Dao.Status()
-	if err := s.PostStatus(r.Context(), status); err != nil {
-		panic("Invalid object.Status")
+	if err := s.PostStatus(r.Context(), &status); err != nil {
+		httperror.BadRequest(w, err)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	res := PostReponse{
