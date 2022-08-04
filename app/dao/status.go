@@ -40,6 +40,18 @@ func (r *status) PostStatus(ctx context.Context, entity *object.Status) error {
 	return nil
 }
 
+func (r *status) DeleteStatus(ctx context.Context, id string) error {
+	_, err := r.db.ExecContext(
+		ctx,
+		"DELETE FROM status WHERE id = ?",
+		id,
+	)
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+	return nil
+}
+
 func (r *status) GetTimelinesPublic(ctx context.Context, q object.Query) ([]object.Status, error) {
 	msg := "SELECT id, account_id, content, create_at FROM status WHERE "
 	msg += "id > " + q.SinceID
