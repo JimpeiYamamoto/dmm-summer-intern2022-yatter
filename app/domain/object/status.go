@@ -17,4 +17,11 @@ type (
 		// The time the account was created
 		CreateAt DateTime `json:"create_at,omitempty" db:"create_at"`
 	}
+
+	Query struct {
+		OnlyMedia string
+		MaxID     string
+		SinceID   string
+		Limit     string
+	}
 )

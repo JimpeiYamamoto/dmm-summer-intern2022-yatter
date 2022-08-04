@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 	"yatter-backend-go/app/domain/object"
 	"yatter-backend-go/app/domain/repository"
 
@@ -48,6 +49,39 @@ func debugTable(ctx context.Context, s *status) {
 	}
 }
 
+func (r *status) GetTimelinesPublic(ctx context.Context, q object.Query) ([]object.Status, error) {
+	msg := "SELECT id, account_id, content FROM status WHERE "
+	msg += "id > " + q.SinceID
+	msg += " AND id < " + q.MaxID
+	l, err := strconv.Atoi(q.Limit)
+	if err != nil {
+		fmt.Println(fmt.Errorf("err: %w", err))
+	}
+	if l > 80 {
+		q.Limit = "80"
+	} else if q.Limit == "" {
+		q.Limit = "40"
+	}
+	msg += " LIMIT " + q.Limit
+	fmt.Println("================")
+	fmt.Println(msg)
+	fmt.Println("================")
+	rows, err := r.db.QueryContext(ctx,
+		msg,
+	)
+	if err != nil {
+		return nil, nil
+	}
+	defer rows.Close()
+	a := make([]object.Status, 0)
+	var s object.Status
+	for rows.Next() {
+		rows.Scan(&s.ID, &s.AccountID, &s.Content)
+		a = append(a, s)
+	}
+	return a, nil
+}
+
 func (r *status) FindById(ctx context.Context, id int64) (*object.Status, error) {
 
 	entity := new(object.Status)
@@ -63,7 +97,5 @@ func (r *status) FindById(ctx context.Context, id int64) (*object.Status, error)
 
 		return nil, fmt.Errorf("%w", err)
 	}
-	//debugTable(ctx, r)
-
 	return entity, nil
 }
