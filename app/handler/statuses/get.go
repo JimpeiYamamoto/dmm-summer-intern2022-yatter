@@ -25,7 +25,17 @@ func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("============")
 	fmt.Println(status)
 	fmt.Println("============")
-	if err := json.NewEncoder(w).Encode(status); err != nil {
+	a := h.app.Dao.Account()
+	account, err := a.FindByUserID(r.Context(), status.AccountID)
+	if err != nil {
+		fmt.Println(fmt.Errorf("%w", err))
+	}
+	res := PostReponse{
+		Id:       status.ID,
+		Account:  *account,
+		Content:  status.Content,
+		CreateAt: status.CreateAt}
+	if err := json.NewEncoder(w).Encode(res); err != nil {
 		httperror.InternalServerError(w, err)
 	}
 }

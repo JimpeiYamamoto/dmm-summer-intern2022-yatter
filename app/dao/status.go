@@ -34,6 +34,11 @@ func (r *status) PostStatus(ctx context.Context, entity *object.Status) error {
 		return err
 	}
 	entity.ID, _ = result.LastInsertId()
+	o, err := r.FindById(ctx, entity.ID)
+	if err != nil {
+		return nil
+	}
+	entity.CreateAt = o.CreateAt
 	return nil
 }
 

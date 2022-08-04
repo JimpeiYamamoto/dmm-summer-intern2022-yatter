@@ -13,9 +13,10 @@ type PostRequest struct {
 }
 
 type PostReponse struct {
-	ID      int64
-	Account object.Account
-	Status  object.Status
+	Id       int64           `json:"id:"`
+	Account  object.Account  `json:"account"`
+	Content  string          `json:"content"`
+	CreateAt object.DateTime `json:"create_at"`
 }
 
 func (h *handler) Post(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +34,11 @@ func (h *handler) Post(w http.ResponseWriter, r *http.Request) {
 		panic("Invalid object.Status")
 	}
 	w.Header().Set("Content-Type", "application/json")
-	res := PostReponse{ID: status.ID, Account: *account, Status: *status}
+	res := PostReponse{
+		Id:       status.ID,
+		Account:  *account,
+		Content:  status.Content,
+		CreateAt: status.CreateAt}
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		httperror.InternalServerError(w, err)
 		return
