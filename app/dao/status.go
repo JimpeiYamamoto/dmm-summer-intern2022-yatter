@@ -2,8 +2,6 @@ package dao
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"strconv"
 	"yatter-backend-go/app/domain/object"
@@ -43,7 +41,7 @@ func (r *status) PostStatus(ctx context.Context, entity *object.Status) error {
 }
 
 func (r *status) GetTimelinesPublic(ctx context.Context, q object.Query) ([]object.Status, error) {
-	msg := "SELECT id, account_id, content FROM status WHERE "
+	msg := "SELECT id, account_id, content, create_at FROM status WHERE "
 	msg += "id > " + q.SinceID
 	msg += " AND id < " + q.MaxID
 	l, err := strconv.Atoi(q.Limit)
@@ -66,7 +64,7 @@ func (r *status) GetTimelinesPublic(ctx context.Context, q object.Query) ([]obje
 	a := make([]object.Status, 0)
 	var s object.Status
 	for rows.Next() {
-		rows.Scan(&s.ID, &s.AccountID, &s.Content)
+		rows.Scan(&s.ID, &s.AccountID, &s.Content, &s.CreateAt)
 		a = append(a, s)
 	}
 	return a, nil
@@ -80,9 +78,6 @@ func (r *status) FindById(ctx context.Context, id int64) (*object.Status, error)
 		id,
 	).StructScan(entity)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
 		return nil, fmt.Errorf("%w", err)
 	}
 	return entity, nil
