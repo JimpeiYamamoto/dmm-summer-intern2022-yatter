@@ -37,15 +37,37 @@ func (r *account) FollowUser(ctx context.Context, myId, targetId int64) error {
 	_, err := r.db.ExecContext(
 		ctx,
 		"INSERT INTO relation (follower_id, followee_id) VALUES (?, ?)",
-		targetId,
 		myId,
+		targetId,
 	)
-	fmt.Println("===========")
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}
-	fmt.Println("===========")
 	return nil
+}
+
+func (r *account) GetRelationships(ctx context.Context, myId, targetId int64) (*object.Relation, error) {
+	var entity object.Relation
+	entity.Id = targetId
+	rows, _ := r.db.QueryContext(
+		ctx,
+		"select * from relation where followee_id = ? AND follower_id = ?",
+		myId,
+		targetId,
+	)
+	if rows.Next() {
+		entity.Following = true
+	}
+	rows, _ = r.db.QueryContext(
+		ctx,
+		"select * from relation where followee_id = ? AND follower_id = ?",
+		targetId,
+		myId,
+	)
+	if rows.Next() {
+		entity.FollowedBy = true
+	}
+	return &entity, nil
 }
 
 func (r *account) CreateNewAccount(ctx context.Context, entity object.Account) error {
