@@ -19,6 +19,8 @@ type Account interface {
 	GetFollowings(ctx context.Context, username, limit string) ([]object.Account, error)
 	// Fetch follower user account
 	GetFollowers(ctx context.Context, username string, query object.Query) ([]object.Account, error)
+	// Unfollow user
+	UnfollowUser(ctx context.Context, myId, targetId int64) error
 	// Fetch relation ships auth account with request account
 	GetRelationships(ctx context.Context, myId, targetId int64) (*object.Relation, error)
 	// Count follower and following account

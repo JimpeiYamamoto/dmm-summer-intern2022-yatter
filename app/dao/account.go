@@ -157,6 +157,20 @@ func (r *account) GetFollowers(ctx context.Context, username string, query objec
 	return as, nil
 }
 
+// Unfollow user
+func (r *account) UnfollowUser(ctx context.Context, myId, targetId int64) error {
+	_, err := r.db.ExecContext(
+		ctx,
+		"DELETE FROM relation (follower_id, followee_id) VALUES (?, ?)",
+		myId,
+		targetId,
+	)
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+	return nil
+}
+
 // Fetch relation ships auth account with request account
 func (r *account) GetRelationships(ctx context.Context, myId, targetId int64) (*object.Relation, error) {
 	var entity object.Relation
