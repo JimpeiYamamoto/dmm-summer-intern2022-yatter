@@ -43,9 +43,9 @@ type (
 	}
 
 	Relation struct {
-		Id         int64
-		Following  bool
-		FollowedBy bool
+		Id         int64 `json:"id"`
+		Following  bool  `json:"following"`
+		FollowedBy bool  `json:"followed_by"`
 	}
 )
 
