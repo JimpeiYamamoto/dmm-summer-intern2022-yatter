@@ -16,4 +16,5 @@ type Account interface {
 	FollowUser(ctx context.Context, myId, targetId int64) error
 	CreateNewAccount(ctx context.Context, entity object.Account) error
 	FindByUserID(ctx context.Context, id int64) (*object.Account, error)
+	GetFollwingFollowerCnt(ctx context.Context, id int64) (int, int, error)
 }

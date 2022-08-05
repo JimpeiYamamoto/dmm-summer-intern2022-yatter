@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"yatter-backend-go/app/domain/object"
 	"yatter-backend-go/app/domain/repository"
@@ -87,19 +88,27 @@ func debugRelation(ctx context.Context, r *account) {
 	}
 }
 
+func QueryFollowerUser(ctx context.Context, r *account, id int64, q object.Query) (*sql.Rows, error) {
+	rows, err := r.db.QueryContext(
+		ctx,
+		"SELECT follower_id FROM relation WHERE followee_id = ? AND follower_id < ? AND follower_id > ? LIMIT ?",
+		id,
+		q.MaxID,
+		q.SinceID,
+		q.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
 func (r *account) GetFollowers(ctx context.Context, username string, query object.Query) ([]object.Account, error) {
 	a, err := r.FindByUsername(ctx, username)
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
-	rows, err := r.db.QueryContext(
-		ctx,
-		"SELECT follower_id FROM relation WHERE followee_id = ? AND follower_id < ? AND follower_id > ? LIMIT ?",
-		a.ID,
-		query.MaxID,
-		query.SinceID,
-		query.Limit,
-	)
+	rows, err := QueryFollowerUser(ctx, r, a.ID, query)
 	if err != nil {
 		return nil, nil
 	}
@@ -116,17 +125,25 @@ func (r *account) GetFollowers(ctx context.Context, username string, query objec
 	return as, nil
 }
 
+func QueryFollowingUser(ctx context.Context, r *account, id int64, limit string) (*sql.Rows, error) {
+	rows, err := r.db.QueryContext(
+		ctx,
+		"select followee_id from relation where follower_id = ? LIMIT ?",
+		id,
+		limit,
+	)
+	if err != nil {
+		return nil, nil
+	}
+	return rows, err
+}
+
 func (r *account) GetFollowingUser(ctx context.Context, username string, limit string) ([]object.Account, error) {
 	a, err := r.FindByUsername(ctx, username)
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
-	rows, err := r.db.QueryContext(
-		ctx,
-		"select followee_id from relation where follower_id = ? LIMIT ?",
-		a.ID,
-		limit,
-	)
+	rows, err := QueryFollowingUser(ctx, r, a.ID, limit)
 	if err != nil {
 		return nil, nil
 	}
@@ -157,9 +174,39 @@ func (r *account) CreateNewAccount(ctx context.Context, entity object.Account) e
 	return nil
 }
 
+func (r *account) GetFollwingFollowerCnt(ctx context.Context, id int64) (int, int, error) {
+	q := object.Query{
+		OnlyMedia: "",
+		MaxID:     "100000",
+		SinceID:   "0",
+		Limit:     "80",
+	}
+	rows, err := QueryFollowingUser(ctx, r, id, q.Limit)
+	if err != nil {
+		return 0, 0, err
+	}
+	n1 := 0
+	for rows.Next() {
+		n1++
+	}
+	rows, err = QueryFollowerUser(ctx, r, id, q)
+	if err != nil {
+		return 0, 0, err
+	}
+	n2 := 0
+	for rows.Next() {
+		n2++
+	}
+	return n1, n2, nil
+}
+
 func (r *account) FindByUsername(ctx context.Context, username string) (*object.Account, error) {
 	entity := new(object.Account)
 	err := r.db.QueryRowxContext(ctx, "select * from account where username = ?", username).StructScan(entity)
+	if err != nil {
+		return nil, fmt.Errorf("%w", err)
+	}
+	entity.FollowingCount, entity.FollowerCount, err = r.GetFollwingFollowerCnt(ctx, entity.ID)
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
@@ -173,6 +220,10 @@ func (r *account) FindByUserID(ctx context.Context, id int64) (*object.Account, 
 		"select * from account where id = ?",
 		id,
 	).StructScan(entity)
+	if err != nil {
+		return nil, fmt.Errorf("%w", err)
+	}
+	entity.FollowingCount, entity.FollowerCount, err = r.GetFollwingFollowerCnt(ctx, entity.ID)
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
