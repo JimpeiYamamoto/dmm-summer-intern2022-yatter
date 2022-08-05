@@ -17,6 +17,7 @@ func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
 		httperror.BadRequest(w, err)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(account); err != nil {
 		httperror.InternalServerError(w, err)
 	}

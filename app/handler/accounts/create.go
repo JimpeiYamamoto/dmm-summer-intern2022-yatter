@@ -2,6 +2,7 @@ package accounts
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"yatter-backend-go/app/domain/object"
@@ -18,23 +19,23 @@ type AddRequest struct {
 func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 	var req AddRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		httperror.BadRequest(w, err)
+		httperror.BadRequest(w, fmt.Errorf("%w", err))
 		return
 	}
 	account := new(object.Account)
 	account.Username = req.Username
 	if err := account.SetPassword(req.Password); err != nil {
-		httperror.InternalServerError(w, err)
+		httperror.InternalServerError(w, fmt.Errorf("%w", err))
 		return
 	}
 	a := h.app.Dao.Account()
 	if err := a.CreateNewAccount(r.Context(), *account); err != nil {
-		httperror.BadRequest(w, err)
+		httperror.BadRequest(w, fmt.Errorf("%w", err))
 		return
 	}
 	account, err := a.FindByUsername(r.Context(), account.Username)
 	if err != nil {
-		httperror.BadRequest(w, err)
+		httperror.BadRequest(w, fmt.Errorf("%w", err))
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

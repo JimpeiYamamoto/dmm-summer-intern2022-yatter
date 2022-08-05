@@ -15,11 +15,12 @@ func (h *handler) Following(w http.ResponseWriter, r *http.Request) {
 		limit = "40"
 	}
 	a := h.app.Dao.Account()
-	as, err := a.GetFollowingUser(r.Context(), username, limit)
+	as, err := a.GetFollowings(r.Context(), username, limit)
 	if err != nil {
 		httperror.BadRequest(w, err)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(as); err != nil {
 		httperror.InternalServerError(w, err)
 	}

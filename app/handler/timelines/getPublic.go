@@ -48,6 +48,7 @@ func (h *handler) GetPublic(w http.ResponseWriter, r *http.Request) {
 		}
 		ress = append(ress, res)
 	}
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(ress); err != nil {
 		httperror.InternalServerError(w, err)
 	}

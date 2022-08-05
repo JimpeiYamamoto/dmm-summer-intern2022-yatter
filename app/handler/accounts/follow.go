@@ -28,6 +28,7 @@ func (h *handler) Follow(w http.ResponseWriter, r *http.Request) {
 		httperror.BadRequest(w, fmt.Errorf("%w", err))
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(entity); err != nil {
 		httperror.InternalServerError(w, err)
 	}

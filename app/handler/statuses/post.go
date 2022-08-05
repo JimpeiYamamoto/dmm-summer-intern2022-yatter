@@ -39,7 +39,9 @@ func (h *handler) Post(w http.ResponseWriter, r *http.Request) {
 		Id:       status.ID,
 		Account:  *account,
 		Content:  status.Content,
-		CreateAt: status.CreateAt}
+		CreateAt: status.CreateAt,
+	}
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		httperror.InternalServerError(w, err)
 		return

@@ -24,7 +24,7 @@ func (h *handler) GetHome(w http.ResponseWriter, r *http.Request) {
 	}
 	a := h.app.Dao.Account()
 	account := auth.AccountOf(r)
-	as, err := a.GetFollowingUser(r.Context(), account.Username, q.Limit)
+	as, err := a.GetFollowings(r.Context(), account.Username, q.Limit)
 	if err != nil {
 		httperror.BadRequest(w, fmt.Errorf("%w", err))
 		return
@@ -45,7 +45,7 @@ func (h *handler) GetHome(w http.ResponseWriter, r *http.Request) {
 	for _, status := range statuses {
 		account, err := a.FindByUserID(r.Context(), status.AccountID)
 		if err != nil {
-			httperror.BadRequest(w, err)
+			httperror.InternalServerError(w, fmt.Errorf("%w", err))
 		}
 		res := Response{
 			Id:       status.ID,
@@ -55,6 +55,7 @@ func (h *handler) GetHome(w http.ResponseWriter, r *http.Request) {
 		}
 		ress = append(ress, res)
 	}
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(ress); err != nil {
 		httperror.InternalServerError(w, err)
 	}

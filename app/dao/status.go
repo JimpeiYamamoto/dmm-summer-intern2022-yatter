@@ -3,7 +3,6 @@ package dao
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"yatter-backend-go/app/domain/object"
 	"yatter-backend-go/app/domain/repository"
 
@@ -21,6 +20,7 @@ func NewStatus(db *sqlx.DB) repository.Status {
 	return &status{db: db}
 }
 
+// Post authentication user new status
 func (r *status) PostStatus(ctx context.Context, entity *object.Status) error {
 	result, err := r.db.ExecContext(
 		ctx,
@@ -40,6 +40,21 @@ func (r *status) PostStatus(ctx context.Context, entity *object.Status) error {
 	return nil
 }
 
+// Fetch Status by ID
+func (r *status) FindById(ctx context.Context, id int64) (*object.Status, error) {
+	entity := new(object.Status)
+	err := r.db.QueryRowxContext(
+		ctx,
+		"select * from status where id = ?",
+		id,
+	).StructScan(entity)
+	if err != nil {
+		return nil, fmt.Errorf("%w", err)
+	}
+	return entity, nil
+}
+
+// Delete authentication user status
 func (r *status) DeleteStatus(ctx context.Context, id string) error {
 	_, err := r.db.ExecContext(
 		ctx,
@@ -52,10 +67,16 @@ func (r *status) DeleteStatus(ctx context.Context, id string) error {
 	return nil
 }
 
+// Fetch timeline all user
 func (r *status) GetTimelineHome(ctx context.Context, q object.Query, accountID int64) ([]object.Status, error) {
 	rows, err := r.db.QueryContext(
 		ctx,
-		"SELECT id, account_id, content, create_at FROM status WHERE account_id = ?  AND id > ? AND id < ? LIMIT ?",
+		`SELECT id, account_id, content, create_at 
+		FROM status 
+		WHERE account_id = ?  
+		AND id > ? 
+		AND id < ? 
+		LIMIT ?`,
 		accountID,
 		q.SinceID,
 		q.MaxID,
@@ -74,22 +95,18 @@ func (r *status) GetTimelineHome(ctx context.Context, q object.Query, accountID 
 	return ss, nil
 }
 
+// Fetch timeline following user
 func (r *status) GetTimelinesPublic(ctx context.Context, q object.Query) ([]object.Status, error) {
-	msg := "SELECT id, account_id, content, create_at FROM status WHERE "
-	msg += "id > " + q.SinceID
-	msg += " AND id < " + q.MaxID
-	l, err := strconv.Atoi(q.Limit)
-	if err != nil {
-		return nil, fmt.Errorf("%w", err)
-	}
-	if l > 80 {
-		q.Limit = "80"
-	} else if q.Limit == "" {
-		q.Limit = "40"
-	}
-	msg += " LIMIT " + q.Limit
-	rows, err := r.db.QueryContext(ctx,
-		msg,
+	rows, err := r.db.QueryContext(
+		ctx,
+		`SELECT id, account_id, content, create_at
+		FROM status
+		WHERE id > ?
+		AND id < ?
+		LIMIT ?`,
+		q.SinceID,
+		q.MaxID,
+		q.Limit,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
@@ -102,17 +119,4 @@ func (r *status) GetTimelinesPublic(ctx context.Context, q object.Query) ([]obje
 		a = append(a, s)
 	}
 	return a, nil
-}
-
-func (r *status) FindById(ctx context.Context, id int64) (*object.Status, error) {
-	entity := new(object.Status)
-	err := r.db.QueryRowxContext(
-		ctx,
-		"select * from status where id = ?",
-		id,
-	).StructScan(entity)
-	if err != nil {
-		return nil, fmt.Errorf("%w", err)
-	}
-	return entity, nil
 }

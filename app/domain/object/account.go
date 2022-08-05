@@ -43,9 +43,12 @@ type (
 	}
 
 	Relation struct {
-		Id         int64 `json:"id"`
-		Following  bool  `json:"following"`
-		FollowedBy bool  `json:"followed_by"`
+		// ID of user
+		Id int64 `json:"id"`
+		// is following
+		Following bool `json:"following"`
+		// is followed
+		FollowedBy bool `json:"followed_by"`
 	}
 )
 

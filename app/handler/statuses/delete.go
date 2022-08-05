@@ -14,4 +14,5 @@ func (h *handler) Delete(w http.ResponseWriter, r *http.Request) {
 	if err := s.DeleteStatus(r.Context(), id); err != nil {
 		httperror.BadRequest(w, fmt.Errorf("%w", err))
 	}
+	w.Header().Set("Content-Type", "application/json")
 }
