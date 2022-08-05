@@ -3,6 +3,7 @@ package dao
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"yatter-backend-go/app/domain/object"
 	"yatter-backend-go/app/domain/repository"
@@ -26,7 +27,7 @@ func NewAccount(db *sqlx.DB) repository.Account {
 func (r *account) CreateNewAccount(ctx context.Context, entity object.Account) error {
 	_, err := r.db.ExecContext(
 		ctx,
-		"INSERT INTO account (id, username, password_hash) VALUES (?, ?, ?)",
+		`INSERT INTO account (id, username, password_hash) VALUES (?, ?, ?)`,
 		entity.ID,
 		entity.Username,
 		entity.PasswordHash,
@@ -42,7 +43,7 @@ func (r *account) FindByUserID(ctx context.Context, id int64) (*object.Account, 
 	entity := new(object.Account)
 	err := r.db.QueryRowxContext(
 		ctx,
-		"select * from account where id = ?",
+		"SELECT * FROM account WHERE id = ?",
 		id,
 	).StructScan(entity)
 	if err != nil {
@@ -58,7 +59,11 @@ func (r *account) FindByUserID(ctx context.Context, id int64) (*object.Account, 
 // Fetch account which has specified username
 func (r *account) FindByUsername(ctx context.Context, username string) (*object.Account, error) {
 	entity := new(object.Account)
-	err := r.db.QueryRowxContext(ctx, "select * from account where username = ?", username).StructScan(entity)
+	err := r.db.QueryRowxContext(
+		ctx,
+		"SELECT * FROM account WHERE username = ?",
+		username,
+	).StructScan(entity)
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
@@ -71,6 +76,9 @@ func (r *account) FindByUsername(ctx context.Context, username string) (*object.
 
 // Follow user
 func (r *account) FollowUser(ctx context.Context, myId, targetId int64) error {
+	if myId == targetId {
+		return errors.New("invalid equal ID")
+	}
 	_, err := r.db.ExecContext(
 		ctx,
 		"INSERT INTO relation (follower_id, followee_id) VALUES (?, ?)",
@@ -86,7 +94,10 @@ func (r *account) FollowUser(ctx context.Context, myId, targetId int64) error {
 func QueryFollowingUser(ctx context.Context, r *account, id int64, limit string) (*sql.Rows, error) {
 	rows, err := r.db.QueryContext(
 		ctx,
-		"select followee_id from relation where follower_id = ? LIMIT ?",
+		`SELECT followee_id
+		FROM relation
+		WHERE follower_id = ?
+		LIMIT ?`,
 		id,
 		limit,
 	)
@@ -122,7 +133,11 @@ func (r *account) GetFollowings(ctx context.Context, username string, limit stri
 func QueryFollowerUser(ctx context.Context, r *account, id int64, q object.Query) (*sql.Rows, error) {
 	rows, err := r.db.QueryContext(
 		ctx,
-		"SELECT follower_id FROM relation WHERE followee_id = ? AND follower_id < ? AND follower_id > ? LIMIT ?",
+		`SELECT follower_id FROM relation
+		WHERE followee_id = ?
+		AND follower_id < ?
+		AND follower_id > ?
+		LIMIT ?`,
 		id,
 		q.MaxID,
 		q.SinceID,
@@ -161,7 +176,7 @@ func (r *account) GetFollowers(ctx context.Context, username string, query objec
 func (r *account) UnfollowUser(ctx context.Context, myId, targetId int64) error {
 	_, err := r.db.ExecContext(
 		ctx,
-		"DELETE FROM relation WHERE (follower_id, followee_id) = (?, ?)",
+		`DELETE FROM relation WHERE (follower_id, followee_id) = (?, ?)`,
 		targetId,
 		myId,
 	)
@@ -177,7 +192,7 @@ func (r *account) GetRelationships(ctx context.Context, myId, targetId int64) (*
 	entity.Id = targetId
 	rows, _ := r.db.QueryContext(
 		ctx,
-		"select * from relation where followee_id = ? AND follower_id = ?",
+		"SELECT * FROM relation WHERE followee_id = ? AND follower_id = ?",
 		myId,
 		targetId,
 	)
@@ -186,7 +201,7 @@ func (r *account) GetRelationships(ctx context.Context, myId, targetId int64) (*
 	}
 	rows, _ = r.db.QueryContext(
 		ctx,
-		"select * from relation where followee_id = ? AND follower_id = ?",
+		"SELECT * FROM relation WHERE followee_id = ? AND follower_id = ?",
 		targetId,
 		myId,
 	)

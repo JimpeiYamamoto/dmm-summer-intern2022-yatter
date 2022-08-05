@@ -45,7 +45,7 @@ func (r *status) FindById(ctx context.Context, id int64) (*object.Status, error)
 	entity := new(object.Status)
 	err := r.db.QueryRowxContext(
 		ctx,
-		"select * from status where id = ?",
+		"SELECT * FROM status WHERE id = ?",
 		id,
 	).StructScan(entity)
 	if err != nil {
