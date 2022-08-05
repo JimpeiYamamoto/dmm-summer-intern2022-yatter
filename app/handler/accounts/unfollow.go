@@ -19,7 +19,7 @@ func (h *handler) Unfollow(w http.ResponseWriter, r *http.Request) {
 		httperror.BadRequest(w, fmt.Errorf("%w", err))
 		return
 	}
-	if err := a.FollowUser(r.Context(), account.ID, target.ID); err != nil {
+	if err := a.UnfollowUser(r.Context(), account.ID, target.ID); err != nil {
 		httperror.BadRequest(w, fmt.Errorf("%w", err))
 		return
 	}

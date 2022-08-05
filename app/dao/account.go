@@ -161,9 +161,9 @@ func (r *account) GetFollowers(ctx context.Context, username string, query objec
 func (r *account) UnfollowUser(ctx context.Context, myId, targetId int64) error {
 	_, err := r.db.ExecContext(
 		ctx,
-		"DELETE FROM relation (follower_id, followee_id) VALUES (?, ?)",
-		myId,
+		"DELETE FROM relation WHERE (follower_id, followee_id) = (?, ?)",
 		targetId,
+		myId,
 	)
 	if err != nil {
 		return fmt.Errorf("%w", err)
