@@ -2,9 +2,11 @@ package timelines
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"yatter-backend-go/app/domain/object"
 	"yatter-backend-go/app/handler/httperror"
+	"yatter-backend-go/app/handler/utils"
 )
 
 type Response struct {
@@ -15,14 +17,19 @@ type Response struct {
 }
 
 func (h *handler) GetPublic(w http.ResponseWriter, r *http.Request) {
-	query := object.Query{
+	q := object.Query{
 		OnlyMedia: r.URL.Query().Get("only_media"),
 		MaxID:     r.URL.Query().Get("max_id"),
 		SinceID:   r.URL.Query().Get("since_id"),
 		Limit:     r.URL.Query().Get("limit"),
 	}
+	q, err := utils.FixQuery(q)
+	if err != nil {
+		httperror.BadRequest(w, fmt.Errorf("%w", err))
+		return
+	}
 	s := h.app.Dao.Status()
-	statuses, err := s.GetTimelinesPublic(r.Context(), query)
+	statuses, err := s.GetTimelinesPublic(r.Context(), q)
 	if err != nil {
 		httperror.BadRequest(w, err)
 	}
