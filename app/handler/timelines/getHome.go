@@ -32,8 +32,6 @@ func (h *handler) GetHome(w http.ResponseWriter, r *http.Request) {
 	s := h.app.Dao.Status()
 	statuses := make([]object.Status, 0)
 	for _, v := range as {
-		fmt.Println(v.Username)
-		fmt.Println(v.ID)
 		tmp, err := s.GetTimelineHome(r.Context(), q, v.ID)
 		statuses = append(statuses, tmp...)
 		if err != nil {
