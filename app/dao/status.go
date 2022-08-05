@@ -52,6 +52,28 @@ func (r *status) DeleteStatus(ctx context.Context, id string) error {
 	return nil
 }
 
+func (r *status) GetTimelineHome(ctx context.Context, q object.Query, accountID int64) ([]object.Status, error) {
+	rows, err := r.db.QueryContext(
+		ctx,
+		"SELECT id, account_id, content, create_at FROM status WHERE account_id = ?  AND id > ? AND id < ? LIMIT ?",
+		accountID,
+		q.SinceID,
+		q.MaxID,
+		q.Limit,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("%w", err)
+	}
+	defer rows.Close()
+	ss := make([]object.Status, 0)
+	var s object.Status
+	for rows.Next() {
+		rows.Scan(&s.ID, &s.AccountID, &s.Content, &s.CreateAt)
+		ss = append(ss, s)
+	}
+	return ss, nil
+}
+
 func (r *status) GetTimelinesPublic(ctx context.Context, q object.Query) ([]object.Status, error) {
 	msg := "SELECT id, account_id, content, create_at FROM status WHERE "
 	msg += "id > " + q.SinceID
